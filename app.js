@@ -185,12 +185,6 @@ function renderOnboarding() {
   dueDateCheckbox.addEventListener('change', () => {
     birthDateLabel.textContent = dueDateCheckbox.checked ? 'Expected due date' : 'Birth date';
   });
-    }
-  });
-
-  dueDateCheckbox.addEventListener('change', () => {
-    labelSpan.textContent = dueDateCheckbox.checked ? 'Expected due date' : 'Birth date';
-  });
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -593,7 +587,11 @@ function init() {
     renderView('feed');
   }
 
-  if ('serviceWorker' in navigator) {
+  if (
+    'serviceWorker' in navigator &&
+    location.hostname !== 'localhost' &&
+    location.hostname !== '127.0.0.1'
+  ) {
     navigator.serviceWorker
       .register('./sw.js')
       .then(() => console.log('Service worker registered.'))

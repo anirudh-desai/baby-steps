@@ -10,6 +10,20 @@
   </head>
   <body>
     <div id="app">Loading Baby Steps…</div>
-    <script type="module" src="app.js"></script>
+    <script type="module" src="app.js?cachebust=1"></script>
+    <script>
+      window.addEventListener('error', (event) => {
+        const app = document.getElementById('app');
+        if (app) {
+          app.textContent = `Error: ${event.message}`;
+        }
+      });
+      window.addEventListener('unhandledrejection', (event) => {
+        const app = document.getElementById('app');
+        if (app) {
+          app.textContent = `Unhandled error: ${event.reason}`;
+        }
+      });
+    </script>
   </body>
 </html>
