@@ -31,15 +31,17 @@ A personal PWA for tracking baby developmental milestones from pre-natal through
 2. **Milestone feed** — main view; scrolling list starting from the top (pre-natal then Day 0 onward); sections grouped by stage label
 3. **Milestone detail modal** — triggered on "Reached" button; date picker defaults to today; backdating allowed; forward-dating never allowed; date is optional (user can mark reached with no date)
 4. **Add custom milestone** — form to add a milestone with a title, optional description, and age range (lower bound day + upper bound day)
-5. **Settings view** — separate full view (not a panel); allows editing of baby name, gender, and birth/due date at any time; toggle to hide/show pre-natal milestones; ability to unmark any completed milestone
+5. **Add custom pre-natal milestone** — separate prenatal milestone form for pregnancy events like "found out the gender", "anatomy scan", or "felt first kick"
+6. **Settings view** — separate full view (not a panel); allows editing of baby name, gender, and birth/due date at any time; toggle to hide/show pre-natal milestones; ability to unmark any completed milestone
 
 ## Milestone categories
 
 ### Pre-natal milestones
 - Anchored to gestational week (e.g. week 8, week 12, week 20)
-- Each entry includes a weekly developmental fact ("baby is the size of a navel orange", "baby's eyelids are now fully formed")
-- Auto-complete: marked as completed automatically once the gestational week passes relative to the due date — no user action required
-- No "Reached" button; no date entry
+- Each built-in entry includes a weekly developmental fact ("baby is the size of a navel orange", "baby's eyelids are now fully formed")
+- Auto-complete: built-in pre-natal items are marked complete automatically once the gestational week passes relative to the due date
+- Custom prenatal milestones can also be added and marked reached manually
+- Completed pre-natal milestones collapse by default in the feed and expand on tap
 - Visible by default; hidden via Settings toggle ("Hide pre-natal milestones")
 - Appear above Day 0 in the feed
 
@@ -53,16 +55,21 @@ A personal PWA for tracking baby developmental milestones from pre-natal through
 - User can unmark a completed milestone from the Settings view
 
 ### Custom milestones
-- User-defined; culturally or personally significant events (e.g. christening, naming ceremony)
-- Assigned a day range (lower bound + upper bound) by the user
-- Inserted into the postnatal feed in lower-bound sort order alongside pre-populated milestones
-- Behave identically to postnatal milestones once created
+- User-defined; culturally or personally significant events (e.g. christening, naming ceremony, first family outing)
+- Includes both postnatal and prenatal custom events
+- Postnatal custom milestones are assigned a day range (lower bound + upper bound)
+- Prenatal custom milestones are assigned a gestational week range
+- Custom milestones appear in the appropriate section and behave like other milestones once created
 
 ## Feed behaviour
 - Feed always starts at the top (pre-natal / Day 0)
 - Completed milestones remain in place in scroll order with a checkmark and optional date
+- Completed milestones collapse by default and can be expanded on tap to show details
 - Uncompleted milestones show a "Reached" button
+- Postnatal completed milestones can be unmarked directly from the expanded card in the feed
+- Prenatal custom milestones can also be marked reached or unmarked manually
 - Milestones are not reordered after completion
+- An age tracker banner appears at the top of the feed showing gestational age for expected due dates, or baby age after birth
 
 ## Data model (localStorage keys)
 - `baby_profile` — `{ name: string|null, undecidedName: boolean, gender: "boy"|"girl"|"unknown", birthDate: "YYYY-MM-DD", isExpectedDueDate: boolean }`
