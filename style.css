@@ -388,6 +388,12 @@ button {
   color: var(--text);
 }
 
+.milestone-note {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-style: italic;
+}
+
 .milestone-card-complete {
   padding: 14px 20px;
 }

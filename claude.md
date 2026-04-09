@@ -75,7 +75,7 @@ A personal PWA for tracking baby developmental milestones from pre-natal through
 - `baby_profile` — `{ name: string|null, undecidedName: boolean, gender: "boy"|"girl"|"unknown", birthDate: "YYYY-MM-DD", isExpectedDueDate: boolean }`
 - `settings` — `{ hidePrenatal: boolean }`
 - `milestones_custom` — array of custom milestone objects
-- `milestones_reached` — object keyed by milestone ID: `{ date: "YYYY-MM-DD"|null }`
+- `milestones_reached` — object keyed by milestone ID: `{ date: "YYYY-MM-DD"|null, notes?: string }`
 
 ## Milestone data structure
 ```js

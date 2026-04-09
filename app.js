@@ -28,6 +28,16 @@ function formatDate(iso) {
   }).format(date);
 }
 
+function escapeHtml(value) {
+  if (!value) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function getPronoun(gender) {
   if (gender === 'boy') return 'he';
   if (gender === 'girl') return 'she';
@@ -212,7 +222,7 @@ function renderOnboarding() {
         <form id="onboarding-form" class="form-grid">
           <label class="field">
             <span>Name</span>
-            <input name="name" type="text" value="${profile.name || ''}" placeholder="Baby name" ${profile.undecidedName ? 'disabled' : ''} />
+            <input name="name" type="text" value="${escapeHtml(profile.name || '')}" placeholder="Baby name" ${profile.undecidedName ? 'disabled' : ''} />
           </label>
 
           <label class="field field-inline">
@@ -269,7 +279,8 @@ function renderOnboarding() {
     event.preventDefault();
 
     const formData = new FormData(form);
-    const name = formData.get('name').trim();
+    const nameValue = formData.get('name');
+    const name = nameValue ? String(nameValue).trim() : '';
     const undecidedName = formData.get('undecidedName') === 'on';
     const gender = formData.get('gender');
     const birthDate = formData.get('birthDate');
@@ -312,7 +323,7 @@ function renderFeed() {
       <header class="page-header">
         <div>
           <p class="eyebrow">Milestone tracker</p>
-          <h1>${subject} milestones</h1>
+          <h1>${escapeHtml(subject)} milestones</h1>
           <p class="lede">Track milestones from pre-natal through Year 3.</p>
         </div>
         <div class="toolbar">
@@ -348,6 +359,18 @@ function renderFeed() {
       const milestone = getMilestoneById(milestoneId);
       if (milestone) {
         openReachModal(milestone);
+      }
+    });
+  });
+
+  app.querySelectorAll('[data-action="edit-notes"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const milestoneId = button.dataset.id;
+      const milestone = getMilestoneById(milestoneId);
+      const reached = getReachedMilestones();
+      const reachedItem = reached[milestoneId] || {};
+      if (milestone) {
+        openReachModal(milestone, reachedItem);
       }
     });
   });
@@ -417,15 +440,16 @@ function renderPrenatalSection(prenatal, profile) {
       <div class="list">
         ${allPrenatal
           .map((item) => {
-            const completed = item.custom ? (getReachedMilestones()[item.id] ? true : false) : isPrenatalCompleted(item, profile);
+            const reachedItem = getReachedMilestones()[item.id];
+            const completed = item.custom ? Boolean(reachedItem) : isPrenatalCompleted(item, profile);
             const cardId = `card-pn-${item.id}`;
-            const reachedLabel = item.custom && getReachedMilestones()[item.id] ? formatDate(getReachedMilestones()[item.id].date) : '';
+            const reachedLabel = item.custom && reachedItem ? formatDate(reachedItem.date) : '';
             return `
               <article class="card card-prenatal ${completed ? 'complete' : ''} prenatal-card" id="${cardId}" data-collapsed="true">
                 <div class="card-header-prenatal">
                   <div class="prenatal-header-left">
                     <span class="week-badge">Week ${item.gestationalWeek}</span>
-                    <span class="prenatal-title">${item.title}</span>
+                    <span class="prenatal-title">${escapeHtml(item.title)}</span>
                     ${item.custom ? '<span class="custom-badge">Custom</span>' : ''}
                   </div>
                   <div class="prenatal-header-right">
@@ -437,16 +461,17 @@ function renderPrenatalSection(prenatal, profile) {
                   </div>
                 </div>
                 <div class="prenatal-expanded" style="display: none;">
-                  <p class="weekly-fact">${item.weeklyFact || (item.custom ? item.description : '')}</p>
-                  ${item.description && !item.custom ? `<p>${item.description}</p>` : ''}
-                  ${item.custom && item.description ? `<p>${item.description}</p>` : ''}
+                  <p class="weekly-fact">${escapeHtml(item.weeklyFact || '')}</p>
+                  ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}
                   ${item.custom
                     ? `<div class="card-footer">
                         ${completed ? `<span class="status status-complete">✓ ${reachedLabel || 'Reached'}</span>` : `<button class="button button-primary" data-action="reach" data-id="${item.id}">Mark reached</button>`}
+                        ${completed ? `<button class="button button-secondary" data-action="edit-notes" data-id="${item.id}">Edit date / notes</button>` : ''}
                         ${completed ? `<button class="button button-tertiary" data-action="unmark" data-id="${item.id}">Unmark</button>` : ''}
                       </div>`
                     : ''
                   }
+                  ${reachedItem && reachedItem.notes ? `<p class="milestone-note"><strong>Notes:</strong> ${escapeHtml(reachedItem.notes)}</p>` : ''}
                 </div>
               </article>
             `;
@@ -468,7 +493,7 @@ function renderPostnatalCard(item, reached) {
         <div class="card-header-compact">
           <div class="card-header-left">
             <span class="age-label">${item.ageLabel}</span>
-            <span class="milestone-title-compact">${item.title}</span>
+            <span class="milestone-title-compact">${escapeHtml(item.title)}</span>
           </div>
           <div class="card-header-right">
             <span class="date-label">${reachedLabel || 'Reached'}</span>
@@ -476,9 +501,11 @@ function renderPostnatalCard(item, reached) {
           </div>
         </div>
         <div class="card-expanded" style="display: none;">
-          <p>${item.description}</p>
+          <p>${escapeHtml(item.description)}</p>
+          ${milestoneReached.notes ? `<p class="milestone-note"><strong>Notes:</strong> ${escapeHtml(milestoneReached.notes)}</p>` : ''}
           <div class="card-footer">
             <span class="status status-complete">✓ ${reachedLabel || 'Reached'}</span>
+            <button class="button button-secondary" data-action="edit-notes" data-id="${item.id}">Edit date / notes</button>
             <button class="button button-tertiary" data-action="unmark" data-id="${item.id}">Unmark</button>
           </div>
         </div>
@@ -492,8 +519,8 @@ function renderPostnatalCard(item, reached) {
         <span class="age-label">${item.ageLabel}</span>
         ${item.critical ? '<span class="star">★</span>' : ''}
       </div>
-      <h3>${item.title}</h3>
-      <p>${item.description}</p>
+      <h3>${escapeHtml(item.title)}</h3>
+      <p>${escapeHtml(item.description)}</p>
       <div class="card-footer">
         <button class="button button-primary" data-action="reach" data-id="${item.id}">Reached</button>
       </div>
@@ -501,18 +528,26 @@ function renderPostnatalCard(item, reached) {
   `;
 }
 
-function openReachModal(milestone) {
+function openReachModal(milestone, reachedData = {}) {
   activeModalId = milestone.id;
   const modalRoot = document.getElementById('modal-root');
+  const modalTitle = reachedData.date || reachedData.notes ? 'Edit milestone' : 'Mark reached';
+  const dateValue = reachedData.date || '';
+  const notesValue = reachedData.notes || '';
+
   modalRoot.innerHTML = `
     <div class="modal-backdrop" data-action="close-modal"></div>
     <div class="modal-card">
-      <h2>Mark reached</h2>
-      <p class="hint">Add the date the milestone was reached, or leave it blank to save without a date.</p>
+      <h2>${modalTitle}</h2>
+      <p class="hint">Add or update the date and notes for this milestone. Leave the date blank if you prefer not to save one.</p>
       <form id="reach-form">
         <label class="field">
           <span>Date reached</span>
-          <input name="date" type="date" max="${todayIso()}" value="${todayIso()}" />
+          <input name="date" type="date" max="${todayIso()}" value="${escapeHtml(dateValue)}" />
+        </label>
+        <label class="field">
+          <span>Notes</span>
+          <textarea name="notes" rows="3" placeholder="Optional notes (e.g. first words)">${escapeHtml(notesValue)}</textarea>
         </label>
         <div class="modal-actions">
           <button type="button" class="button button-secondary" data-action="cancel-modal">Cancel</button>
@@ -528,9 +563,11 @@ function openReachModal(milestone) {
     event.preventDefault();
     const formData = new FormData(event.target);
     const dateValue = formData.get('date');
+    const notesValue = formData.get('notes');
     const reached = getReachedMilestones();
     reached[activeModalId] = {
-      date: dateValue ? clampDate(dateValue) : null
+      date: dateValue ? clampDate(dateValue) : null,
+      notes: notesValue ? String(notesValue).trim() : ''
     };
     saveReachedMilestones(reached);
     closeModal();
@@ -564,7 +601,7 @@ function renderSettings() {
         <form id="settings-form" class="form-grid">
           <label class="field">
             <span>Name</span>
-            <input name="name" type="text" value="${profile.name || ''}" placeholder="Baby name" ${profile.undecidedName ? 'disabled' : ''} />
+            <input name="name" type="text" value="${escapeHtml(profile.name || '')}" placeholder="Baby name" ${profile.undecidedName ? 'disabled' : ''} />
           </label>
 
           <label class="field field-inline">
@@ -614,7 +651,10 @@ function renderSettings() {
               <article class="list-item">
                 <div>
                   <strong>${milestone ? milestone.title : id}</strong>
-                  <div class="muted">${reachedItem.date ? formatDate(reachedItem.date) : 'Reached'}</div>
+                  <div class="muted">
+                    ${reachedItem.date ? formatDate(reachedItem.date) : 'Reached'}
+                    ${reachedItem.notes ? ` · ${escapeHtml(reachedItem.notes)}` : ''}
+                  </div>
                 </div>
                 <button class="button button-tertiary" data-action="unmark" data-id="${id}">Unmark</button>
               </article>
@@ -645,7 +685,8 @@ function renderSettings() {
   app.querySelector('#settings-form').addEventListener('submit', (event) => {
     event.preventDefault();
     const formData = new FormData(event.target);
-    const name = formData.get('name').trim();
+    const nameValue = formData.get('name');
+    const name = nameValue ? String(nameValue).trim() : '';
     const undecidedName = formData.get('undecidedName') === 'on';
     const gender = formData.get('gender');
     const birthDate = formData.get('birthDate');
